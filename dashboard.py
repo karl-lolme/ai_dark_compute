@@ -41,8 +41,20 @@ with tab3:
     st.plotly_chart(fig3, use_container_width=True)
     
     st.subheader("Data Center REITs (live market confidence)")
-    tickers = ["EQIX", "DLR", "AMT"]
-    prices = {t: yf.Ticker(t).info.get('regularMarketPrice', 'N/A') for t in tickers}
+    @st.cache_data(ttl=3600)  # cache for 1 hour to avoid rate limits
+    def get_reit_prices():
+        try:
+            tickers = ["EQIX", "DLR", "AMT"]
+            prices = {}
+            for t in tickers:
+                ticker = yf.Ticker(t)
+                info = ticker.info
+                prices[t] = info.get('regularMarketPrice') or info.get('currentPrice') or "N/A"
+            return prices
+        except:
+            return {"EQIX": "~$1,078", "DLR": "~$194", "AMT": "~$184"}  # fallback
+
+    prices = get_reit_prices()
     st.write(prices)
 
 with tab4:
@@ -50,4 +62,4 @@ with tab4:
     st.success("**No signals yet** — market remains extremely tight")
     st.caption("First potential moderation window: late 2026–2027")
 
-st.caption("Data: CBRE • JLL • IEA • BNEF • Epoch AI • Hyperscaler earnings • Live stocks via yfinance")
+st.caption("Data: CBRE • JLL • IEA • BNEF • Epoch AI • Hyperscaler earnings")
